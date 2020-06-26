@@ -7,15 +7,13 @@ set( CMAKE_CXX_FLAGS "-fpermissive" )
 
 
 include_directories(
+  include
   ${CERES_INCLUDE_DIRS}
   ${EIGEN3_INCLUDE_DIRS}
-  ${DBOW3_INCLUDE_DIRS}
 )
 
+add_executable( example_2d
+        src/example_2d.cpp
+        src/pose_graph_2d.cpp )
+target_link_libraries( example_2d ${CERES_LIBRARIES}   )
 
-#add_executable( ceres_try ceres_try.cpp )
-#target_link_libraries( ceres_try ${CERES_LIBRARIES}   )
-
-
-add_executable( toy_pose_graph ceres_vertigo.cpp )
-target_link_libraries( toy_pose_graph ${CERES_LIBRARIES}   )

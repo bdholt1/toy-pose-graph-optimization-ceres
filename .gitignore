@@ -1,2 +1,4 @@
 build/*
-*.txt
+# CLion artifacts
+.idea
+catkin-build-debug
