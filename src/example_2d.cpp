@@ -12,7 +12,7 @@ int main() {
   PoseGraph2D graph;
   graph.LoadFromFile(input_filename);
   graph.AddBogusLoopClosures(25);
-  graph.WriteToFile(data_path + "/init_nodes.txt");
+  graph.WriteNodesToFile(data_path + "/init_nodes.txt");
 
   ceres::Problem problem;
   ceres::LossFunction* loss_function = new ceres::HuberLoss(1.0);
@@ -50,5 +50,5 @@ int main() {
   std::cout << summary.FullReport() << std::endl;
 
   // Write Pose Graph after Optimization
-  graph.WriteToFile(data_path + "/after_opt_nodes.txt");
+  graph.WriteNodesToFile(data_path + "/after_opt_nodes.txt");
 }

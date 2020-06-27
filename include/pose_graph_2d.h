@@ -67,7 +67,7 @@ class PoseGraph2D {
 
   void LoadFromFile(const std::string& filename);
 
-  void WriteToFile(const std::string& filename);
+  void WriteNodesToFile(const std::string& filename);
 
   // TODO: these members are public because direct access is required to build the ceres problem
   // Nodes are stored with a shared_ptr because multiple edges may refer to the same nodes

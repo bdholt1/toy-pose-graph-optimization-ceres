@@ -4,54 +4,33 @@
 #include <fstream>
 #include <random>
 
-#include <boost/algorithm/string.hpp>
-#include <boost/lexical_cast.hpp>
-
 void PoseGraph2D::AddNode(std::shared_ptr<Node2D> node) { nodes_.push_back(node); }
 
 void PoseGraph2D::AddEdge(Edge2D edge) { edges_.push_back(edge); }
 
 void PoseGraph2D::LoadFromFile(const std::string& filename) {
   // Read the file in g2o format
-  std::ifstream fp;
-  fp.open(filename.c_str());
+  std::ifstream g2o_file(filename.c_str());
 
-  std::string line;
-  while (std::getline(fp, line)) {
-    std::vector<std::string> words;
-    boost::split(words, line, boost::is_any_of(" "), boost::token_compress_on);
-    if (words[0].compare("VERTEX_SE2") == 0) {
-      int node_index = boost::lexical_cast<int>(words[1]);
-      double x = boost::lexical_cast<double>(words[2]);
-      double y = boost::lexical_cast<double>(words[3]);
-      double theta = boost::lexical_cast<double>(words[4]);
-
-      nodes_.push_back(std::make_unique<Node2D>(node_index, x, y, theta));
-    }
-
-    if (words[0].compare("EDGE_SE2") == 0) {
-      // cout << e << words[0] << endl;
-      int a_indx = boost::lexical_cast<int>(words[1]);
-      int b_indx = boost::lexical_cast<int>(words[2]);
-
-      double dx = boost::lexical_cast<double>(words[3]);
-      double dy = boost::lexical_cast<double>(words[4]);
-      double dtheta = boost::lexical_cast<double>(words[5]);
-
+  std::string type;
+  while (g2o_file >> type) {
+    if (type == "VERTEX_SE2") {
+      int index;
+      double x, y, theta;
+      g2o_file >> index >> x >> y >> theta;
+      nodes_.push_back(std::make_unique<Node2D>(index, x, y, theta));
+    } else if (type == "EDGE_SE2") {
+      int a_index, b_index;
+      double x, y, theta;
       double I11, I12, I13, I22, I23, I33;
-      I11 = boost::lexical_cast<double>(words[6]);
-      I12 = boost::lexical_cast<double>(words[7]);
-      I13 = boost::lexical_cast<double>(words[8]);
-      I22 = boost::lexical_cast<double>(words[9]);
-      I23 = boost::lexical_cast<double>(words[10]);
-      I33 = boost::lexical_cast<double>(words[11]);
+      g2o_file >> a_index >> b_index >> x >> y >> theta >> I11 >> I12 >> I13 >> I22 >> I23 >> I33;
 
       // odometry nodes by definition follow from each other
       // loop closures are any nodes that do not follow on
-      bool indices_follow = (abs(a_indx - b_indx) == 1);
+      bool indices_follow = (abs(a_index - b_index) == 1);
 
-      Edge2D edge(nodes_[a_indx], nodes_[b_indx], indices_follow ? EdgeType::Odometry : EdgeType::LoopClosure);
-      edge.setEdgeTransform(dx, dy, dtheta);
+      Edge2D edge(nodes_[a_index], nodes_[b_index], indices_follow ? EdgeType::Odometry : EdgeType::LoopClosure);
+      edge.setEdgeTransform(x, y, theta);
       edge.setInformationMatrix(I11, I12, I13, I22, I23, I33);
       edges_.push_back(edge);
     }
@@ -59,7 +38,7 @@ void PoseGraph2D::LoadFromFile(const std::string& filename) {
 }
 
 // write nodes to file to be visualized with python script
-void PoseGraph2D::WriteToFile(const std::string& filename) {
+void PoseGraph2D::WriteNodesToFile(const std::string& filename) {
   std::ofstream fp;
   fp.open(filename.c_str());
   for (auto& n : nodes_) {
