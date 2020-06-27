@@ -67,8 +67,7 @@ struct RelativeMotionError {
 struct DCSLoopClosureError {
   // Observation for the edge
   DCSLoopClosureError(double dx, double dy, double dtheta, Eigen::Matrix3d sqrt_information)
-      : dx_(dx), dy_(dy), dtheta_(NormaliseAngle(dtheta)), sqrt_information_(sqrt_information) {
-  }
+      : dx_(dx), dy_(dy), dtheta_(NormaliseAngle(dtheta)), sqrt_information_(sqrt_information) {}
 
   // calculate the error for each edge. a and b are 3-vectors representing state
   // of the node ie. x,y,theta
@@ -111,7 +110,8 @@ struct DCSLoopClosureError {
 
   static ceres::CostFunction* Create(const double dx, const double dy, const double dtheta,
                                      const Eigen::Matrix3d& sqrt_information) {
-    return (new ceres::AutoDiffCostFunction<DCSLoopClosureError, 3, 3, 3>(new DCSLoopClosureError(dx, dy, dtheta, sqrt_information)));
+    return (new ceres::AutoDiffCostFunction<DCSLoopClosureError, 3, 3, 3>(
+        new DCSLoopClosureError(dx, dy, dtheta, sqrt_information)));
   };
 
  private:
