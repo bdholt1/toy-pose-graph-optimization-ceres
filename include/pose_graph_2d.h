@@ -61,7 +61,7 @@ class PoseGraph2D {
  public:
   void AddNode(Node2D* node);
 
-  void AddEdge(Edge2D* edge);
+  void AddEdge(Edge2D edge);
 
   void AddBogusLoopClosures(int n);
 
@@ -72,7 +72,7 @@ class PoseGraph2D {
   // TODO: these members are public because direct access is required to build
   // the ceres problem
   std::vector<Node2D*> nodes_;  // nodes must be a vector because indices identify nodes
-  std::list<Edge2D*> edges_;
+  std::list<Edge2D> edges_;
 };
 
 #endif  // TOY_POSE_GRAPH_OPTIMIZATION_CERES__POSE_GRAPH_2D_H_

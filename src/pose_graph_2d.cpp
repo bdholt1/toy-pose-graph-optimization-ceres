@@ -8,7 +8,7 @@
 
 void PoseGraph2D::AddNode(Node2D* node) { nodes_.push_back(node); }
 
-void PoseGraph2D::AddEdge(Edge2D* edge) { edges_.push_back(edge); }
+void PoseGraph2D::AddEdge(Edge2D edge) { edges_.push_back(edge); }
 
 void PoseGraph2D::LoadFromFile(const std::string& filename) {
   // Read the file in g2o format
@@ -50,10 +50,9 @@ void PoseGraph2D::LoadFromFile(const std::string& filename) {
       // loop closures are any nodes that do not follow on
       bool indices_follow = (abs(a_indx - b_indx) == 1);
 
-      Edge2D* edge =
-          new Edge2D(nodes_[a_indx], nodes_[b_indx], indices_follow ? EdgeType::Odometry : EdgeType::LoopClosure);
-      edge->setEdgeTransform(dx, dy, dtheta);
-      edge->setInformationMatrix(I11, I12, I13, I22, I23, I33);
+      Edge2D edge(nodes_[a_indx], nodes_[b_indx], indices_follow ? EdgeType::Odometry : EdgeType::LoopClosure);
+      edge.setEdgeTransform(dx, dy, dtheta);
+      edge.setInformationMatrix(I11, I12, I13, I22, I23, I33);
       edges_.push_back(edge);
     }
   }
@@ -78,12 +77,12 @@ void PoseGraph2D::AddBogusLoopClosures(int n) {
   for (int i = 0; i < n; i++) {
     int a = node_distribution(generator);
     int b = node_distribution(generator);
-    Edge2D* edge = new Edge2D(nodes_[a], nodes_[b], EdgeType::BogusLoopClosure);
-    edge->setEdgeTransform(translation_distribution(generator), translation_distribution(generator),
-                           orientation_distribution(generator));
-    edge->setInformationMatrix(information_distribution(generator), information_distribution(generator),
-                               information_distribution(generator), information_distribution(generator),
-                               information_distribution(generator), information_distribution(generator));
+    Edge2D edge(nodes_[a], nodes_[b], EdgeType::BogusLoopClosure);
+    edge.setEdgeTransform(translation_distribution(generator), translation_distribution(generator),
+                          orientation_distribution(generator));
+    edge.setInformationMatrix(information_distribution(generator), information_distribution(generator),
+                              information_distribution(generator), information_distribution(generator),
+                              information_distribution(generator), information_distribution(generator));
     edges_.push_back(edge);
   }
 }
