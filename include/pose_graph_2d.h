@@ -3,7 +3,7 @@
 
 #include <Eigen/Eigen>
 
-#include <fstream>
+#include <memory>
 #include <string>
 
 #include <list>
@@ -28,7 +28,7 @@ class Node2D {
 
 class Edge2D {
  public:
-  Edge2D(Node2D* a, Node2D* b, EdgeType type) : a_(a), b_(b), type_(type) {}
+  Edge2D(std::shared_ptr<Node2D> a, std::shared_ptr<Node2D> b, EdgeType type) : a_(a), b_(b), type_(type) {}
 
   void setEdgeTransform(double x, double y, double theta) {
     x_ = x;
@@ -50,7 +50,7 @@ class Edge2D {
     information_(2, 1) = information_(1, 2);
   }
 
-  Node2D *a_, *b_;
+  std::shared_ptr<Node2D> a_, b_;
   double x_, y_, theta_;
   // The inverse of the measurement covariance matrix.
   Eigen::Matrix3d information_;
@@ -59,7 +59,7 @@ class Edge2D {
 
 class PoseGraph2D {
  public:
-  void AddNode(Node2D* node);
+  void AddNode(std::shared_ptr<Node2D> node);
 
   void AddEdge(Edge2D edge);
 
@@ -69,9 +69,9 @@ class PoseGraph2D {
 
   void WriteToFile(const std::string& filename);
 
-  // TODO: these members are public because direct access is required to build
-  // the ceres problem
-  std::vector<Node2D*> nodes_;  // nodes must be a vector because indices identify nodes
+  // TODO: these members are public because direct access is required to build the ceres problem
+  // Nodes are stored with a shared_ptr because multiple edges may refer to the same nodes
+  std::vector<std::shared_ptr<Node2D>> nodes_;  // nodes must be a vector because indices identify nodes
   std::list<Edge2D> edges_;
 };
 

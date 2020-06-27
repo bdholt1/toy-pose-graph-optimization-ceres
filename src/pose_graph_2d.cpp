@@ -1,12 +1,13 @@
 
 #include "pose_graph_2d.h"
 
+#include <fstream>
 #include <random>
 
 #include <boost/algorithm/string.hpp>
 #include <boost/lexical_cast.hpp>
 
-void PoseGraph2D::AddNode(Node2D* node) { nodes_.push_back(node); }
+void PoseGraph2D::AddNode(std::shared_ptr<Node2D> node) { nodes_.push_back(node); }
 
 void PoseGraph2D::AddEdge(Edge2D edge) { edges_.push_back(edge); }
 
@@ -25,8 +26,7 @@ void PoseGraph2D::LoadFromFile(const std::string& filename) {
       double y = boost::lexical_cast<double>(words[3]);
       double theta = boost::lexical_cast<double>(words[4]);
 
-      Node2D* node = new Node2D(node_index, x, y, theta);
-      nodes_.push_back(node);
+      nodes_.push_back(std::make_unique<Node2D>(node_index, x, y, theta));
     }
 
     if (words[0].compare("EDGE_SE2") == 0) {
@@ -62,7 +62,7 @@ void PoseGraph2D::LoadFromFile(const std::string& filename) {
 void PoseGraph2D::WriteToFile(const std::string& filename) {
   std::ofstream fp;
   fp.open(filename.c_str());
-  for (Node2D* n : nodes_) {
+  for (auto& n : nodes_) {
     fp << n->index_ << " " << n->p_[0] << " " << n->p_[1] << " " << n->p_[2] << std::endl;
   }
 }
