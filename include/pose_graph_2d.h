@@ -1,18 +1,13 @@
 #ifndef TOY_POSE_GRAPH_OPTIMIZATION_CERES__POSE_GRAPH_2D_H_
 #define TOY_POSE_GRAPH_OPTIMIZATION_CERES__POSE_GRAPH_2D_H_
 
-#include <string>
 #include <fstream>
+#include <string>
 
-#include <vector>
 #include <list>
+#include <vector>
 
-enum class EdgeType {
-  Odometry,
-  LoopClosure,
-  BogusLoopClosure,
-  LandmarkObservation
-};
+enum class EdgeType { Odometry, LoopClosure, BogusLoopClosure, LandmarkObservation };
 
 /*
 enum class NodeType {
@@ -21,11 +16,9 @@ enum class NodeType {
 };
  */
 
-class Node2D
-{
+class Node2D {
  public:
-  Node2D(int index, double x, double y, double theta)
-  {
+  Node2D(int index, double x, double y, double theta) {
     this->index = index;
     p = new double[3];
     p[0] = x;
@@ -34,30 +27,24 @@ class Node2D
   }
 
   int index;
-  double *p;
+  double* p;
 };
 
-
-class Edge2D
-{
+class Edge2D {
  public:
-
-  Edge2D(const Node2D* a, const Node2D* b, EdgeType type )
-  {
+  Edge2D(const Node2D* a, const Node2D* b, EdgeType type) {
     this->a = a;
     this->b = b;
     this->type = type;
   }
 
-  void setEdgeTransform( double x, double y, double theta )
-  {
+  void setEdgeTransform(double x, double y, double theta) {
     this->x = x;
     this->y = y;
     this->theta = theta;
   }
 
-  void setInformationMatrix( double I11, double  I12, double  I13, double I22, double I23, double I33 )
-  {
+  void setInformationMatrix(double I11, double I12, double I13, double I22, double I23, double I33) {
     this->I11 = I11;
     this->I12 = I12;
     this->I13 = I13;
@@ -72,7 +59,6 @@ class Edge2D
   EdgeType type;
 };
 
-
 class PoseGraph2D {
  public:
   void AddNode(Node2D* node);
@@ -85,8 +71,8 @@ class PoseGraph2D {
 
   void WriteToFile(const std::string& filename);
 
-  std::vector<Node2D*> nodes_; //nodes must be a vector because the indices are used to find nodes
+  std::vector<Node2D*> nodes_;  // nodes must be a vector because the indices are used to find nodes
   std::list<Edge2D*> edges_;
 };
 
-#endif //TOY_POSE_GRAPH_OPTIMIZATION_CERES__POSE_GRAPH_2D_H_
+#endif  // TOY_POSE_GRAPH_OPTIMIZATION_CERES__POSE_GRAPH_2D_H_
