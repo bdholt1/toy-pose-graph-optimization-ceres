@@ -13,32 +13,52 @@ import numpy
 from optparse import OptionParser
 
 parser = OptionParser()
-parser.add_option("--initial_poses", dest="initial_poses",
-                  default="init_nodes.txt", help="The filename that contains the original poses.")
-parser.add_option("--optimized_poses", dest="optimized_poses",
-                  default="after_opt_nodes.txt", help="The filename that contains the optimized poses.")
+parser.add_option(
+    "--initial_poses",
+    dest="initial_poses",
+    default="init_nodes.txt",
+    help="The filename that contains the original poses.",
+)
+parser.add_option(
+    "--optimized_poses",
+    dest="optimized_poses",
+    default="after_opt_nodes.txt",
+    help="The filename that contains the optimized poses.",
+)
 (options, args) = parser.parse_args()
 
 # Read the original and optimized poses files.
 poses_original = None
-if options.initial_poses != '':
-  poses_original = numpy.genfromtxt(options.initial_poses, usecols = (1, 2))
+if options.initial_poses != "":
+    poses_original = numpy.genfromtxt(options.initial_poses, usecols=(1, 2))
 
 poses_optimized = None
-if options.optimized_poses != '':
-  poses_optimized = numpy.genfromtxt(options.optimized_poses, usecols = (1, 2))
+if options.optimized_poses != "":
+    poses_optimized = numpy.genfromtxt(options.optimized_poses, usecols=(1, 2))
 
 # Plots the results for the specified poses.
 plot.figure()
 if poses_original is not None:
-  plot.plot(poses_original[:, 0], poses_original[:, 1], '-', label="Original",
-            alpha=0.5, color="green")
+    plot.plot(
+        poses_original[:, 0],
+        poses_original[:, 1],
+        "-",
+        label="Original",
+        alpha=0.5,
+        color="green",
+    )
 
 if poses_optimized is not None:
-  plot.plot(poses_optimized[:, 0], poses_optimized[:, 1], '-', label="Optimized",
-            alpha=0.5, color="blue")
+    plot.plot(
+        poses_optimized[:, 0],
+        poses_optimized[:, 1],
+        "-",
+        label="Optimized",
+        alpha=0.5,
+        color="blue",
+    )
 
-plot.axis('equal')
+plot.axis("equal")
 plot.legend()
 # Show the plot and wait for the user to close.
 plot.show()
