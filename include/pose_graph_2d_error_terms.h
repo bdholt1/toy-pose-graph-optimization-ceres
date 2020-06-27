@@ -16,11 +16,8 @@ Eigen::Matrix<T, 3, 3> IsometricTransform2D(T dx, T dy, T yaw_radians) {
 }
 
 struct RelativeMotionError {
-  RelativeMotionError(double dx, double dy, double dtheta) {
-    this->dx = dx;
-    this->dy = dy;
-    this->dtheta = NormaliseAngle(dtheta);
-  }
+  RelativeMotionError(double dx, double dy, double dtheta)
+      : dx_(dx), dy_(dy), dtheta_(NormaliseAngle(dtheta)) {}
 
   // calculate the error for each edge. a and b are 3-vectors representing state of the node ie. x,y,theta
   template <typename T>
@@ -32,7 +29,7 @@ struct RelativeMotionError {
     Eigen::Matrix<T, 3, 3> w_T_b = IsometricTransform2D<T>(b[0], b[1], b[2]);
 
     // Convert observed transform a_Tcap_b
-    Eigen::Matrix<T, 3, 3> a_Tcap_b = IsometricTransform2D<T>(T(dx), T(dy), T(dtheta));
+    Eigen::Matrix<T, 3, 3> a_Tcap_b = IsometricTransform2D<T>(T(dx_), T(dy_), T(dtheta_));
 
     // now we have :: w_T_a, w_T_b and a_Tcap_b
     // compute pose difference
@@ -45,22 +42,24 @@ struct RelativeMotionError {
     return true;
   }
 
-  double dx;
-  double dy;
-  double dtheta;
-
   static ceres::CostFunction* Create(const double dx, const double dy, const double dtheta) {
-    return (new ceres::AutoDiffCostFunction<RelativeMotionError, 3, 3, 3>(new RelativeMotionError(dx, dy, dtheta)));
+    return (new ceres::AutoDiffCostFunction<RelativeMotionError, 3, 3, 3>(
+        new RelativeMotionError(dx, dy, dtheta)));
   };
+
+ private:
+  // the observed displacement of frame b w.r.t. frame a in the x direction
+  const double dx_;
+  // the observed displacement of frame b w.r.t. frame a in the y direction
+  const double dy_;
+  // the observed orientation of frame b w.r.t. frame a
+  const double dtheta_;
 };
 
 struct DCSLoopClosureError {
   // Observation for the edge
-  DCSLoopClosureError(double dx, double dy, double dtheta) {
-    this->dx = dx;
-    this->dy = dy;
-    this->dtheta = NormaliseAngle(dtheta);
-    this->s_cap = drand48() * .1 + .9;
+  DCSLoopClosureError(double dx, double dy, double dtheta)
+      : dx_(dx), dy_(dy), dtheta_(NormaliseAngle(dtheta)) {
   }
 
   // calculate the error for each edge. a and b are 3-vectors representing state of the node ie. x,y,theta
@@ -73,7 +72,7 @@ struct DCSLoopClosureError {
     Eigen::Matrix<T, 3, 3> w_T_b = IsometricTransform2D<T>(b[0], b[1], b[2]);
 
     // Convert observed transform a_Tcap_b
-    Eigen::Matrix<T, 3, 3> a_Tcap_b = IsometricTransform2D<T>(T(dx), T(dy), T(dtheta));
+    Eigen::Matrix<T, 3, 3> a_Tcap_b = IsometricTransform2D<T>(T(dx_), T(dy_), T(dtheta_));
 
     // now we have :: w_T_a, w_T_b and a_Tcap_b
     // compute pose difference
@@ -99,14 +98,17 @@ struct DCSLoopClosureError {
     return true;
   }
 
-  double dx;
-  double dy;
-  double dtheta;
-  double s_cap;
-
   static ceres::CostFunction* Create(const double dx, const double dy, const double dtheta) {
     return (new ceres::AutoDiffCostFunction<DCSLoopClosureError, 3, 3, 3>(new DCSLoopClosureError(dx, dy, dtheta)));
   };
+
+ private:
+  // the observed displacement of frame b w.r.t. frame a in the x direction
+  const double dx_;
+  // the observed displacement of frame b w.r.t. frame a in the y direction
+  const double dy_;
+  // the observed orientation of frame b w.r.t. frame a
+  const double dtheta_;
 };
 
 #endif  //_POSE_GRAPH_2D_ERROR_TERMS_H_
