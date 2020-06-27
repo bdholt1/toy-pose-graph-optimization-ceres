@@ -3,6 +3,8 @@
 
 #include <Eigen/Eigen>
 
+#include "normalise_angle.h"
+
 template <typename T>
 Eigen::Matrix<T, 3, 3> IsometricTransform2D(T dx, T dy, T yaw_radians) {
   const T cos_yaw = ceres::cos(yaw_radians);
@@ -17,7 +19,7 @@ struct RelativeMotionError {
   RelativeMotionError(double dx, double dy, double dtheta) {
     this->dx = dx;
     this->dy = dy;
-    this->dtheta = dtheta;
+    this->dtheta = NormaliseAngle(dtheta);
   }
 
   // calculate the error for each edge. a and b are 3-vectors representing state of the node ie. x,y,theta
@@ -38,7 +40,7 @@ struct RelativeMotionError {
 
     e[0] = diff(0, 2);
     e[1] = diff(1, 2);
-    e[2] = ceres::asin(diff(1, 0));
+    e[2] = ceres::asin( NormaliseAngle(diff(1, 0)));
 
     return true;
   }
@@ -57,7 +59,7 @@ struct DCSLoopClosureError {
   DCSLoopClosureError(double dx, double dy, double dtheta) {
     this->dx = dx;
     this->dy = dy;
-    this->dtheta = dtheta;
+    this->dtheta = NormaliseAngle(dtheta);
     this->s_cap = drand48() * .1 + .9;
   }
 
@@ -92,7 +94,7 @@ struct DCSLoopClosureError {
 
     e[0] = psi * diff(0, 2);
     e[1] = psi * diff(1, 2);
-    e[2] = psi * ceres::asin(diff(1, 0));
+    e[2] = psi * ceres::asin(NormaliseAngle(diff(1, 0)));
 
     return true;
   }
