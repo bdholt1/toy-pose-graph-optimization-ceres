@@ -2,8 +2,7 @@
 
 #include <ceres/ceres.h>
 
-#include <pose_graph_2d.h>
-
+#include "pose_graph_2d.h"
 #include "pose_graph_2d_error_terms.h"
 
 int main() {
@@ -49,6 +48,6 @@ int main() {
   ceres::Solve(options, &problem, &summary);
   std::cout << summary.FullReport() << std::endl;
 
-  // Write Pose Graph after Optimization
+  // Write pose graph after optimization
   graph.WriteNodesToFile(data_path + "/after_opt_nodes.txt");
 }

@@ -25,18 +25,17 @@ struct RelativeMotionError {
   bool operator()(const T* const a, const T* const b, T* e) const {
     Eigen::Map<Eigen::Matrix<T, 3, 1> > residuals_map(e);
 
-    // Convert a to T1 ^w_T_a
-    Eigen::Matrix<T, 3, 3> w_T_a = IsometricTransform2D<T>(a[0], a[1], a[2]);
+    // Convert a to isometric 2D transform of a in the world coordinate frame
+    Eigen::Matrix<T, 3, 3> T_w_a = IsometricTransform2D<T>(a[0], a[1], a[2]);
 
-    // Convert b to T2 ^w_T_a
-    Eigen::Matrix<T, 3, 3> w_T_b = IsometricTransform2D<T>(b[0], b[1], b[2]);
+    // Convert b to isometric 2D transform in the world coordinate frame
+    Eigen::Matrix<T, 3, 3> T_w_b = IsometricTransform2D<T>(b[0], b[1], b[2]);
 
-    // Convert observed transform a_Tcap_b
-    Eigen::Matrix<T, 3, 3> a_Tcap_b = IsometricTransform2D<T>(T(dx_), T(dy_), T(dtheta_));
+    // Convert observed position and orientation into isometric 2D transform
+    Eigen::Matrix<T, 3, 3> T_a_b_hat = IsometricTransform2D<T>(T(dx_), T(dy_), T(dtheta_));
 
-    // now we have :: w_T_a, w_T_b and a_Tcap_b
-    // compute pose difference
-    Eigen::Matrix<T, 3, 3> diff = a_Tcap_b.inverse() * (w_T_a.inverse() * w_T_b);
+    // T_w_a^{-1} * T_w_b = T_a_w * T_w_b = T_a_b
+    Eigen::Matrix<T, 3, 3> diff = T_a_b_hat.inverse() * (T_w_a.inverse() * T_w_b);
 
     residuals_map(0) = diff(0, 2);
     residuals_map(1) = diff(1, 2);
@@ -75,30 +74,20 @@ struct DCSLoopClosureError {
   bool operator()(const T* const a, const T* const b, T* e) const {
     Eigen::Map<Eigen::Matrix<T, 3, 1> > residuals_map(e);
 
-    // Convert a to T1 ^w_T_a
-    Eigen::Matrix<T, 3, 3> w_T_a = IsometricTransform2D<T>(a[0], a[1], a[2]);
+    // Convert a to isometric 2D transform in the world coordinate frame
+    Eigen::Matrix<T, 3, 3> T_w_a = IsometricTransform2D<T>(a[0], a[1], a[2]);
 
-    // Convert b to T2 ^w_T_a
-    Eigen::Matrix<T, 3, 3> w_T_b = IsometricTransform2D<T>(b[0], b[1], b[2]);
+    // Convert b to isometric 2D transform in the world coordinate frame
+    Eigen::Matrix<T, 3, 3> T_w_b = IsometricTransform2D<T>(b[0], b[1], b[2]);
 
-    // Convert observed transform a_Tcap_b
-    Eigen::Matrix<T, 3, 3> a_Tcap_b = IsometricTransform2D<T>(T(dx_), T(dy_), T(dtheta_));
+    // Convert observed position and orientation into isometric 2D transform
+    Eigen::Matrix<T, 3, 3> T_a_b_hat = IsometricTransform2D<T>(T(dx_), T(dy_), T(dtheta_));
 
-    // now we have :: w_T_a, w_T_b and a_Tcap_b
-    // compute pose difference
-    Eigen::Matrix<T, 3, 3> diff = a_Tcap_b.inverse() * (w_T_a.inverse() * w_T_b);
+    // T_w_a^{-1} * T_w_b = T_a_w * T_w_b = T_a_b
+    Eigen::Matrix<T, 3, 3> diff = T_a_b_hat.inverse() * (T_w_a.inverse() * T_w_b);
 
-    // psi - scalar (covariance term. See the paper on DCS for derivation)
-    // T psi = T(1.0) / (T(1.0) + exp( T(-2.0)*s[0] ));
-    // T psi = max( T(0.0), min( T(1.0), s[0] ) );
-
-    T res = diff(0, 2) * diff(0, 2) + diff(1, 2) * diff(1, 2);  // + asin( diff(1,0) )*asin( diff(1,0) );
-    // T psi_org = T(.3) * T(s_cap) / ( T(1.0) + res ) ;
-    T psi_org = sqrt(T(2.0) * T(.5) / (T(.5) + res));
-    // e[0] = psi ;
-    // e[1] = T(0.0);
-    // e[2] = T(0.0);
-    // return true;
+    T res = diff(0, 2) * diff(0, 2) + diff(1, 2) * diff(1, 2);
+    T psi_org = ceres::sqrt(T(2.0) * T(.5) / (T(.5) + res));
     T psi = std::min(T(1.0), psi_org);
 
     residuals_map(0) = psi * diff(0, 2);
