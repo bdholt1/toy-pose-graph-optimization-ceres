@@ -69,19 +69,21 @@ void PoseGraph2D::WriteToFile(const std::string& filename) {
 }
 
 void PoseGraph2D::AddBogusLoopClosures(int n) {
-
   std::default_random_engine generator;
   std::uniform_int_distribution<int> node_distribution(0, nodes_.size());
   std::uniform_real_distribution<double> translation_distribution(-2.0, 2.0);
   std::uniform_real_distribution<double> orientation_distribution(-M_PI, M_PI);
+  std::uniform_real_distribution<double> information_distribution(0.000001, 1);
 
   for (int i = 0; i < n; i++) {
     int a = node_distribution(generator);
     int b = node_distribution(generator);
-    // std::cout << a << "<--->" << b << std::endl;
     Edge2D* edge = new Edge2D(nodes_[a], nodes_[b], EdgeType::BogusLoopClosure);
-    edge->setEdgeTransform(translation_distribution(generator),
-        translation_distribution(generator), orientation_distribution(generator));
+    edge->setEdgeTransform(translation_distribution(generator), translation_distribution(generator),
+                           orientation_distribution(generator));
+    edge->setInformationMatrix(information_distribution(generator), information_distribution(generator),
+                               information_distribution(generator), information_distribution(generator),
+                               information_distribution(generator), information_distribution(generator));
     edges_.push_back(edge);
   }
 }
