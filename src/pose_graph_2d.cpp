@@ -1,6 +1,8 @@
 
 #include "pose_graph_2d.h"
 
+#include <random>
+
 #include <boost/algorithm/string.hpp>
 #include <boost/lexical_cast.hpp>
 
@@ -44,8 +46,9 @@ void PoseGraph2D::LoadFromFile(const std::string& filename) {
       I23 = boost::lexical_cast<double>(words[10]);
       I33 = boost::lexical_cast<double>(words[11]);
 
-      bool indices_follow = (abs(a_indx - b_indx) == 1);
       // odometry nodes by definition follow from each other
+      // loop closures are any nodes that do not follow on
+      bool indices_follow = (abs(a_indx - b_indx) == 1);
 
       Edge2D* edge =
           new Edge2D(nodes_[a_indx], nodes_[b_indx], indices_follow ? EdgeType::Odometry : EdgeType::LoopClosure);
@@ -66,15 +69,19 @@ void PoseGraph2D::WriteToFile(const std::string& filename) {
 }
 
 void PoseGraph2D::AddBogusLoopClosures(int n) {
-  int MIN = 0;
-  int MAX = nodes_.size();
+
+  std::default_random_engine generator;
+  std::uniform_int_distribution<int> node_distribution(0, nodes_.size());
+  std::uniform_real_distribution<double> translation_distribution(0.5, 10.0);
+  std::uniform_real_distribution<double> orientation_distribution(-M_PI, M_PI);
 
   for (int i = 0; i < n; i++) {
-    int a = rand() % MAX;
-    int b = rand() % MAX;
+    int a = node_distribution(generator);
+    int b = node_distribution(generator);
     // std::cout << a << "<--->" << b << std::endl;
     Edge2D* edge = new Edge2D(nodes_[a], nodes_[b], EdgeType::BogusLoopClosure);
-    edge->setEdgeTransform(rand() / RAND_MAX, rand() / RAND_MAX, rand() / RAND_MAX);
+    edge->setEdgeTransform(translation_distribution(generator),
+        translation_distribution(generator), orientation_distribution(generator));
     edges_.push_back(edge);
   }
 }
