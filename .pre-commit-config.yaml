@@ -1,0 +1,18 @@
+fail_fast: false
+
+repos:
+  - repo: https://github.com/psf/black
+    rev: stable
+    hooks:
+      - id: black
+
+  - repo: https://gitlab.com/pycqa/flake8
+    rev: 3.7.9
+    hooks:
+      - id: flake8
+
+  - repo: https://github.com/pocc/pre-commit-hooks
+    rev: bash
+    hooks:
+      - id: clang-format
+        args: [--version=6.0, -i] # Workaround for https://github.com/pocc/pre-commit-hooks/issues/9
