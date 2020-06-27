@@ -15,16 +15,17 @@ int main() {
   graph.WriteToFile(data_path + "/init_nodes.txt");
 
   ceres::Problem problem;
-  ceres::LossFunction* loss_function = new ceres::HuberLoss(0.01);
+  ceres::LossFunction* loss_function = new ceres::HuberLoss(1.0);
 
   for (Edge2D* edge : graph.edges_) {
     ceres::CostFunction* cost_function = nullptr;
+    const Eigen::Matrix3d sqrt_information = edge->information_.llt().matrixL();
     if (edge->type_ == EdgeType::Odometry) {
-      cost_function = RelativeMotionError::Create(edge->x_, edge->y_, edge->theta_);
+      cost_function = RelativeMotionError::Create(edge->x_, edge->y_, edge->theta_, sqrt_information);
     } else if (edge->type_ == EdgeType::LoopClosure) {
-      cost_function = DCSLoopClosureError::Create(edge->x_, edge->y_, edge->theta_);
+      cost_function = DCSLoopClosureError::Create(edge->x_, edge->y_, edge->theta_, sqrt_information);
     } else if (edge->type_ == EdgeType::BogusLoopClosure) {
-      cost_function = DCSLoopClosureError::Create(edge->x_, edge->y_, edge->theta_);
+      cost_function = DCSLoopClosureError::Create(edge->x_, edge->y_, edge->theta_, sqrt_information);
     }
     problem.AddResidualBlock(cost_function, loss_function, edge->a_->p_, edge->b_->p_);
   }

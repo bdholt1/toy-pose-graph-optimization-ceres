@@ -1,6 +1,8 @@
 #ifndef TOY_POSE_GRAPH_OPTIMIZATION_CERES__POSE_GRAPH_2D_H_
 #define TOY_POSE_GRAPH_OPTIMIZATION_CERES__POSE_GRAPH_2D_H_
 
+#include <Eigen/Eigen>
+
 #include <fstream>
 #include <string>
 
@@ -35,11 +37,23 @@ class Edge2D {
   }
 
   void setInformationMatrix(double I11, double I12, double I13, double I22, double I23, double I33) {
+    information_(0, 0) = I11;
+    information_(0, 1) = I12;
+    information_(0, 2) = I13;
+    information_(1, 1) = I22;
+    information_(1, 2) = I23;
+    information_(2, 2) = I33;
 
+    // Set the lower triangular part of the information matrix.
+    information_(1, 0) = information_(0, 1);
+    information_(2, 0) = information_(0, 2);
+    information_(2, 1) = information_(1, 2);
   }
 
   Node2D *a_, *b_;
   double x_, y_, theta_;
+  // The inverse of the measurement covariance matrix.
+  Eigen::Matrix3d information_;
   EdgeType type_;
 };
 
