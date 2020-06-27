@@ -26,7 +26,7 @@ class Node2D {
 
 class Edge2D {
  public:
-  Edge2D(const Node2D* a, const Node2D* b, EdgeType type) : a_(a), b_(b), type_(type) {}
+  Edge2D(Node2D* a, Node2D* b, EdgeType type) : a_(a), b_(b), type_(type) {}
 
   void setEdgeTransform(double x, double y, double theta) {
     x_ = x;
@@ -38,7 +38,7 @@ class Edge2D {
 
   }
 
-  const Node2D *a_, *b_;
+  Node2D *a_, *b_;
   double x_, y_, theta_;
   EdgeType type_;
 };

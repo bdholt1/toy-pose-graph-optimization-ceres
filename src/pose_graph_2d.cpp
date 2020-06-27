@@ -72,7 +72,7 @@ void PoseGraph2D::AddBogusLoopClosures(int n) {
 
   std::default_random_engine generator;
   std::uniform_int_distribution<int> node_distribution(0, nodes_.size());
-  std::uniform_real_distribution<double> translation_distribution(0.5, 10.0);
+  std::uniform_real_distribution<double> translation_distribution(-2.0, 2.0);
   std::uniform_real_distribution<double> orientation_distribution(-M_PI, M_PI);
 
   for (int i = 0; i < n; i++) {

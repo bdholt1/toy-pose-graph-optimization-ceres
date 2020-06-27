@@ -11,7 +11,7 @@ int main() {
   std::string input_filename = data_path + "/input_M3500_g2o.g2o";
   PoseGraph2D graph;
   graph.LoadFromFile(input_filename);
-  // graph.AddBogusLoopClosures(25);
+  graph.AddBogusLoopClosures(25);
   graph.WriteToFile(data_path + "/init_nodes.txt");
 
   ceres::Problem problem;
