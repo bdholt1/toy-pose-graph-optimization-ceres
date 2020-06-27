@@ -19,7 +19,8 @@ struct RelativeMotionError {
   RelativeMotionError(double dx, double dy, double dtheta)
       : dx_(dx), dy_(dy), dtheta_(NormaliseAngle(dtheta)) {}
 
-  // calculate the error for each edge. a and b are 3-vectors representing state of the node ie. x,y,theta
+  // calculate the error for each edge. a and b are 3-vectors representing state
+  // of the node ie. x,y,theta
   template <typename T>
   bool operator()(const T* const a, const T* const b, T* e) const {
     // Convert a to T1 ^w_T_a
@@ -62,7 +63,8 @@ struct DCSLoopClosureError {
       : dx_(dx), dy_(dy), dtheta_(NormaliseAngle(dtheta)) {
   }
 
-  // calculate the error for each edge. a and b are 3-vectors representing state of the node ie. x,y,theta
+  // calculate the error for each edge. a and b are 3-vectors representing state
+  // of the node ie. x,y,theta
   template <typename T>
   bool operator()(const T* const a, const T* const b, T* e) const {
     // Convert a to T1 ^w_T_a
