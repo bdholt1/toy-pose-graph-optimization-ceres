@@ -19,14 +19,14 @@ int main() {
 
   for (Edge2D* edge : graph.edges_) {
     ceres::CostFunction* cost_function = nullptr;
-    if (edge->type == EdgeType::Odometry) {
-      cost_function = RelativeMotionError::Create(edge->x, edge->y, edge->theta);
-    } else if (edge->type == EdgeType::LoopClosure) {
-      cost_function = DCSLoopClosureError::Create(edge->x, edge->y, edge->theta);
-    } else if (edge->type == EdgeType::BogusLoopClosure) {
-      cost_function = DCSLoopClosureError::Create(edge->x, edge->y, edge->theta);
+    if (edge->type_ == EdgeType::Odometry) {
+      cost_function = RelativeMotionError::Create(edge->x_, edge->y_, edge->theta_);
+    } else if (edge->type_ == EdgeType::LoopClosure) {
+      cost_function = DCSLoopClosureError::Create(edge->x_, edge->y_, edge->theta_);
+    } else if (edge->type_ == EdgeType::BogusLoopClosure) {
+      cost_function = DCSLoopClosureError::Create(edge->x_, edge->y_, edge->theta_);
     }
-    problem.AddResidualBlock(cost_function, loss_function, edge->a->p, edge->b->p);
+    problem.AddResidualBlock(cost_function, loss_function, edge->a_->p_, edge->b_->p_);
   }
 
   // The pose graph optimization problem has three DOFs that are not fully
@@ -36,7 +36,7 @@ int main() {
   // internal damping which mitigate this issue, but it is better to properly
   // constrain the gauge freedom. This can be done by setting one of the poses
   // as constant so the optimizer cannot change it.
-  problem.SetParameterBlockConstant(graph.nodes_[0]->p);
+  problem.SetParameterBlockConstant(graph.nodes_[0]->p_);
 
   ceres::Solver::Options options;
   options.minimizer_progress_to_stdout = true;

@@ -64,7 +64,7 @@ void PoseGraph2D::WriteToFile(const std::string& filename) {
   std::ofstream fp;
   fp.open(filename.c_str());
   for (Node2D* n : nodes_) {
-    fp << n->index << " " << n->p[0] << " " << n->p[1] << " " << n->p[2] << std::endl;
+    fp << n->index_ << " " << n->p_[0] << " " << n->p_[1] << " " << n->p_[2] << std::endl;
   }
 }
 

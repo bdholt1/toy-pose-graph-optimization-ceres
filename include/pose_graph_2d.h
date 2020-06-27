@@ -18,45 +18,29 @@ enum class NodeType {
 
 class Node2D {
  public:
-  Node2D(int index, double x, double y, double theta) {
-    this->index = index;
-    p = new double[3];
-    p[0] = x;
-    p[1] = y;
-    p[2] = theta;
-  }
+  Node2D(int index, double x, double y, double theta) : index_(index), p_{x, y, theta} {}
 
-  int index;
-  double* p;
+  int index_;
+  double p_[3];
 };
 
 class Edge2D {
  public:
-  Edge2D(const Node2D* a, const Node2D* b, EdgeType type) {
-    this->a = a;
-    this->b = b;
-    this->type = type;
-  }
+  Edge2D(const Node2D* a, const Node2D* b, EdgeType type) : a_(a), b_(b), type_(type) {}
 
   void setEdgeTransform(double x, double y, double theta) {
-    this->x = x;
-    this->y = y;
-    this->theta = theta;
+    x_ = x;
+    y_ = y;
+    theta_ = theta;
   }
 
   void setInformationMatrix(double I11, double I12, double I13, double I22, double I23, double I33) {
-    this->I11 = I11;
-    this->I12 = I12;
-    this->I13 = I13;
-    this->I22 = I22;
-    this->I23 = I23;
-    this->I33 = I33;
+
   }
 
-  const Node2D *a, *b;
-  double x, y, theta;
-  double I11, I12, I13, I22, I23, I33;
-  EdgeType type;
+  const Node2D *a_, *b_;
+  double x_, y_, theta_;
+  EdgeType type_;
 };
 
 class PoseGraph2D {
@@ -71,7 +55,9 @@ class PoseGraph2D {
 
   void WriteToFile(const std::string& filename);
 
-  std::vector<Node2D*> nodes_;  // nodes must be a vector because the indices are used to find nodes
+  // TODO: these members are public because direct access is required to build
+  // the ceres problem
+  std::vector<Node2D*> nodes_;  // nodes must be a vector because indices identify nodes
   std::list<Edge2D*> edges_;
 };
 
