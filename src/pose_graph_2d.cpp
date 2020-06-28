@@ -58,7 +58,7 @@ void PoseGraph2D::LoadFromFile(const std::string& filename) {
       int index;
       double x, y, theta;
       g2o_file >> index >> x >> y >> theta;
-      vertices_.push_back(std::make_unique<Vertex2D>(index, x, y, theta));
+      vertices_.push_back(std::make_shared<Vertex2D>(index, x, y, theta));
     } else if (type == "EDGE_SE2") {
       int a_index, b_index;
       double x, y, theta;
