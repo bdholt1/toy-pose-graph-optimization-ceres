@@ -28,27 +28,9 @@ class Vertex2D {
 
 class Edge2D {
  public:
-  Edge2D(std::shared_ptr<Vertex2D> a, std::shared_ptr<Vertex2D> b, EdgeType type) : a_(a), b_(b), type_(type) {}
-
-  void setEdgeTransform(double x, double y, double theta) {
-    x_ = x;
-    y_ = y;
-    theta_ = theta;
-  }
-
-  void setInformationMatrix(double I11, double I12, double I13, double I22, double I23, double I33) {
-    information_(0, 0) = I11;
-    information_(0, 1) = I12;
-    information_(0, 2) = I13;
-    information_(1, 1) = I22;
-    information_(1, 2) = I23;
-    information_(2, 2) = I33;
-
-    // Set the lower triangular part of the information matrix.
-    information_(1, 0) = information_(0, 1);
-    information_(2, 0) = information_(0, 2);
-    information_(2, 1) = information_(1, 2);
-  }
+  Edge2D(std::shared_ptr<Vertex2D> a, std::shared_ptr<Vertex2D> b, double x, double y, double theta, EdgeType type,
+         Eigen::Matrix3d information)
+      : a_(a), b_(b), x_(x), y_(y), theta_(theta), type_(type), information_(information) {}
 
   std::shared_ptr<Vertex2D> a_, b_;
   double x_, y_, theta_;

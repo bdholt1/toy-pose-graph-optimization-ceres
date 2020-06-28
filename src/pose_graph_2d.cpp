@@ -46,7 +46,6 @@ void PoseGraph2D::Optimise() {
   ceres::Solver::Summary summary;
   ceres::Solve(options, &problem, &summary);
   std::cout << summary.FullReport() << std::endl;
-
 }
 
 void PoseGraph2D::LoadFromFile(const std::string& filename) {
@@ -63,16 +62,20 @@ void PoseGraph2D::LoadFromFile(const std::string& filename) {
     } else if (type == "EDGE_SE2") {
       int a_index, b_index;
       double x, y, theta;
-      double I11, I12, I13, I22, I23, I33;
-      g2o_file >> a_index >> b_index >> x >> y >> theta >> I11 >> I12 >> I13 >> I22 >> I23 >> I33;
+      Eigen::Matrix3d information;
+      g2o_file >> a_index >> b_index >> x >> y >> theta >> information(0, 0) >> information(0, 1) >>
+          information(0, 2) >> information(1, 1) >> information(1, 2) >> information(2, 2);
+
+      // Set the lower triangular part of the information matrix.
+      information(1, 0) = information(0, 1);
+      information(2, 0) = information(0, 2);
+      information(2, 1) = information(1, 2);
 
       // odometry nodes by definition follow from each other
       // loop closures are any vertices that do not follow on
       bool indices_follow = (abs(a_index - b_index) == 1);
-
-      Edge2D edge(vertices_[a_index], vertices_[b_index], indices_follow ? EdgeType::Odometry : EdgeType::LoopClosure);
-      edge.setEdgeTransform(x, y, theta);
-      edge.setInformationMatrix(I11, I12, I13, I22, I23, I33);
+      EdgeType type = indices_follow ? EdgeType::Odometry : EdgeType::LoopClosure;
+      Edge2D edge(vertices_[a_index], vertices_[b_index], x, y, theta, type, information);
       edges_.push_back(edge);
     }
   }
@@ -97,12 +100,18 @@ void PoseGraph2D::AddBogusLoopClosures(int n) {
   for (int i = 0; i < n; i++) {
     int a = vertex_distribution(generator);
     int b = vertex_distribution(generator);
-    Edge2D edge(vertices_[a], vertices_[b], EdgeType::BogusLoopClosure);
-    edge.setEdgeTransform(translation_distribution(generator), translation_distribution(generator),
-                          orientation_distribution(generator));
-    edge.setInformationMatrix(information_distribution(generator), information_distribution(generator),
-                              information_distribution(generator), information_distribution(generator),
-                              information_distribution(generator), information_distribution(generator));
+    double x = translation_distribution(generator);
+    double y = translation_distribution(generator);
+    double theta = orientation_distribution(generator);
+    Eigen::Matrix3d information;
+    information << information_distribution(generator), information_distribution(generator),
+        information_distribution(generator), information_distribution(generator), information_distribution(generator),
+        information_distribution(generator), 0.0, 0.0, 0.0;
+    // Set the lower triangular part of the information matrix.
+    information(1, 0) = information(0, 1);
+    information(2, 0) = information(0, 2);
+    information(2, 1) = information(1, 2);
+    Edge2D edge(vertices_[a], vertices_[b], x, y, theta, EdgeType::BogusLoopClosure, information);
     edges_.push_back(edge);
   }
 }
