@@ -11,7 +11,7 @@ int main() {
   PoseGraph2D graph;
   graph.LoadFromFile(input_filename);
   // graph.AddBogusLoopClosures(25);
-  graph.WriteNodesToFile(data_path + "/init_nodes.txt");
+  graph.WriteVerticesToFile(data_path + "/init_nodes.txt");
 
   ceres::Problem problem;
   ceres::LossFunction* loss_function = new ceres::HuberLoss(1.0);
@@ -36,7 +36,7 @@ int main() {
   // internal damping which mitigate this issue, but it is better to properly
   // constrain the gauge freedom. This can be done by setting one of the poses
   // as constant so the optimizer cannot change it.
-  problem.SetParameterBlockConstant(graph.nodes_[0]->p_);
+  problem.SetParameterBlockConstant(graph.vertices_[0]->p_);
 
   ceres::Solver::Options options;
   options.minimizer_progress_to_stdout = true;
@@ -49,5 +49,5 @@ int main() {
   std::cout << summary.FullReport() << std::endl;
 
   // Write pose graph after optimization
-  graph.WriteNodesToFile(data_path + "/after_opt_nodes.txt");
+  graph.WriteVerticesToFile(data_path + "/after_opt_nodes.txt");
 }

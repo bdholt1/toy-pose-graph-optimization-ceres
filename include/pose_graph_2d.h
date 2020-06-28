@@ -12,15 +12,15 @@
 enum class EdgeType { Odometry, LoopClosure, BogusLoopClosure, LandmarkObservation };
 
 /*
-enum class NodeType {
+enum class VertexType {
   Robot,
   Landmark
 };
  */
 
-class Node2D {
+class Vertex2D {
  public:
-  Node2D(int index, double x, double y, double theta) : index_(index), p_{x, y, theta} {}
+  Vertex2D(int index, double x, double y, double theta) : index_(index), p_{x, y, theta} {}
 
   int index_;
   double p_[3];
@@ -28,7 +28,7 @@ class Node2D {
 
 class Edge2D {
  public:
-  Edge2D(std::shared_ptr<Node2D> a, std::shared_ptr<Node2D> b, EdgeType type) : a_(a), b_(b), type_(type) {}
+  Edge2D(std::shared_ptr<Vertex2D> a, std::shared_ptr<Vertex2D> b, EdgeType type) : a_(a), b_(b), type_(type) {}
 
   void setEdgeTransform(double x, double y, double theta) {
     x_ = x;
@@ -50,7 +50,7 @@ class Edge2D {
     information_(2, 1) = information_(1, 2);
   }
 
-  std::shared_ptr<Node2D> a_, b_;
+  std::shared_ptr<Vertex2D> a_, b_;
   double x_, y_, theta_;
   // The inverse of the measurement covariance matrix.
   Eigen::Matrix3d information_;
@@ -59,7 +59,7 @@ class Edge2D {
 
 class PoseGraph2D {
  public:
-  void AddNode(std::shared_ptr<Node2D> node);
+  void AddNode(std::shared_ptr<Vertex2D> node);
 
   void AddEdge(Edge2D edge);
 
@@ -67,11 +67,10 @@ class PoseGraph2D {
 
   void LoadFromFile(const std::string& filename);
 
-  void WriteNodesToFile(const std::string& filename);
+  void WriteVerticesToFile(const std::string& filename);
 
-  // TODO: these members are public because direct access is required to build the ceres problem
-  // Nodes are stored with a shared_ptr because multiple edges may refer to the same nodes
-  std::vector<std::shared_ptr<Node2D>> nodes_;  // nodes must be a vector because indices identify nodes
+  // Vertices are stored with a shared_ptr because multiple edges may refer to the same vertices
+  std::vector<std::shared_ptr<Vertex2D>> vertices_;
   std::list<Edge2D> edges_;
 };
 
