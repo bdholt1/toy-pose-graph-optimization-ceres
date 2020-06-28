@@ -87,6 +87,18 @@ struct DCSLoopClosureError {
     // T_w_a^{-1} * T_w_b = T_a_w * T_w_b = T_a_b
     Eigen::Matrix<T, 3, 3> diff = T_a_b_hat.inverse() * (T_w_a.inverse() * T_w_b);
 
+    // see eq. 15 in "Robust Map Optimization using Dynamic Covariance Scaling", Agarwal et al 2013
+    //residuals_map(0) = diff(0, 2);
+    //residuals_map(1) = diff(1, 2);
+    //residuals_map(2) = ceres::asin(NormaliseAngle(diff(1, 0)));
+
+    //T chi_2  = residuals_map.transpose() * residuals_map;
+    //T psi = T(0.5);
+    //T s = std::min(T(1.0), T(2.0) * psi / (psi + chi_2));
+
+    //residuals_map = s * sqrt_information_.template cast<T>() * residuals_map;
+
+    // TODO: this is mpkuse's implementation. Find out why this works and the above does not.
     T res = diff(0, 2) * diff(0, 2) + diff(1, 2) * diff(1, 2);
     T psi_org = ceres::sqrt(T(2.0) * T(.5) / (T(.5) + res));
     T psi = std::min(T(1.0), psi_org);
