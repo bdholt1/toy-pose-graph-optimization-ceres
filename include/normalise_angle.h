@@ -1,7 +1,7 @@
 #ifndef _NORMALISE_ANGLE_H_
 #define _NORMALISE_ANGLE_H_
 
-#include <cmath>
+#include <ceres/ceres.h>
 
 template <typename T>
 T NormaliseAngle(const T& angle_radians) {

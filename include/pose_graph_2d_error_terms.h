@@ -1,6 +1,7 @@
 #ifndef _POSE_GRAPH_2D_ERROR_TERMS_H_
 #define _POSE_GRAPH_2D_ERROR_TERMS_H_
 
+#include <ceres/ceres.h>
 #include <Eigen/Eigen>
 
 #include "normalise_angle.h"

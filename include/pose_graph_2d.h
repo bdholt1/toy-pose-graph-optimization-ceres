@@ -65,10 +65,13 @@ class PoseGraph2D {
 
   void AddBogusLoopClosures(int n);
 
+  void Optimise();
+
   void LoadFromFile(const std::string& filename);
 
   void WriteVerticesToFile(const std::string& filename);
 
+ private:
   // Vertices are stored with a shared_ptr because multiple edges may refer to the same vertices
   std::vector<std::shared_ptr<Vertex2D>> vertices_;
   std::list<Edge2D> edges_;
