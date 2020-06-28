@@ -59,7 +59,7 @@ class Edge2D {
 
 class PoseGraph2D {
  public:
-  void AddNode(std::shared_ptr<Vertex2D> node);
+  void AddVertex(std::shared_ptr<Vertex2D> vertex);
 
   void AddEdge(Edge2D edge);
 

@@ -7,7 +7,7 @@
 #include <fstream>
 #include <random>
 
-void PoseGraph2D::AddNode(std::shared_ptr<Vertex2D> vertex) { vertices_.push_back(vertex); }
+void PoseGraph2D::AddVertex(std::shared_ptr<Vertex2D> vertex) { vertices_.push_back(vertex); }
 
 void PoseGraph2D::AddEdge(Edge2D edge) { edges_.push_back(edge); }
 
