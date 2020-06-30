@@ -17,3 +17,8 @@ add_executable( example_2d
         src/pose_graph_2d.cpp )
 target_link_libraries( example_2d ${CERES_LIBRARIES}   )
 
+add_executable( example_3d
+        src/example_3d.cpp
+        src/pose_graph_3d.cpp )
+target_link_libraries( example_3d ${CERES_LIBRARIES} )
+
