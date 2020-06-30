@@ -12,8 +12,7 @@ void PoseGraph3D::AddEdge(Edge3D edge) { edges_.push_back(edge); }
 void PoseGraph3D::Optimise() {
   ceres::Problem problem;
   ceres::LossFunction* loss_function = nullptr;
-  ceres::LocalParameterization* quaternion_local_parameterization =
-      new ceres::EigenQuaternionParameterization;
+  ceres::LocalParameterization* quaternion_local_parameterization = new ceres::EigenQuaternionParameterization;
 
   for (auto& edge : edges_) {
     ceres::CostFunction* cost_function = nullptr;
@@ -23,12 +22,11 @@ void PoseGraph3D::Optimise() {
     } else if (edge.type_ == EdgeType::LoopClosure) {
       cost_function = RelativeMotionError::Create(edge.p_, edge.q_, sqrt_information);
     }
-    problem.AddResidualBlock(cost_function, loss_function, edge.a_->p_.data(), edge.a_->q_.coeffs().data(), edge.b_->p_.data(), edge.b_->q_.coeffs().data());
+    problem.AddResidualBlock(cost_function, loss_function, edge.a_->p_.data(), edge.a_->q_.coeffs().data(),
+                             edge.b_->p_.data(), edge.b_->q_.coeffs().data());
 
-    problem.SetParameterization(edge.a_->q_.coeffs().data(),
-                                 quaternion_local_parameterization);
-    problem.SetParameterization(edge.b_->q_.coeffs().data(),
-                                 quaternion_local_parameterization);
+    problem.SetParameterization(edge.a_->q_.coeffs().data(), quaternion_local_parameterization);
+    problem.SetParameterization(edge.b_->q_.coeffs().data(), quaternion_local_parameterization);
   }
 
   // The pose graph optimization problem has six DOFs that are not fully
