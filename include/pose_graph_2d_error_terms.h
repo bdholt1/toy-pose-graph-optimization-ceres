@@ -17,75 +17,90 @@ Eigen::Matrix<T, 3, 3> IsometricTransform2D(T dx, T dy, T yaw_radians) {
 }
 
 struct RelativeMotionError {
-  RelativeMotionError(double dx, double dy, double dtheta, Eigen::Matrix3d sqrt_information)
-      : dx_(dx), dy_(dy), dtheta_(NormaliseAngle(dtheta)), sqrt_information_(sqrt_information) {}
+  RelativeMotionError(const Eigen::Vector2d& p, const double theta, const Eigen::Matrix3d& sqrt_information)
+      : measured_p_(p), measured_theta_(NormaliseAngle(theta)), sqrt_information_(sqrt_information) {}
 
   // calculate the error for each edge. a and b are 3-vectors representing state
   // of the node ie. x,y,theta
   template <typename T>
-  bool operator()(const T* const a, const T* const b, T* e) const {
-    Eigen::Map<Eigen::Matrix<T, 3, 1> > residuals_map(e);
+  bool operator()(const T* const p_a_ptr, const T* const theta_a_ptr, const T* const p_b_ptr,
+                  const T* const theta_b_ptr, T* residuals_ptr) const {
+    Eigen::Map<const Eigen::Matrix<T, 2, 1> > p_a(p_a_ptr);
+    const T theta_a = theta_a_ptr[0];
+
+    Eigen::Map<const Eigen::Matrix<T, 2, 1> > p_b(p_b_ptr);
+    const T theta_b = theta_b_ptr[0];
 
     // Convert a to isometric 2D transform of a in the world coordinate frame
-    Eigen::Matrix<T, 3, 3> T_w_a = IsometricTransform2D<T>(a[0], a[1], a[2]);
+    Eigen::Matrix<T, 3, 3> T_w_a = IsometricTransform2D<T>(p_a.x(), p_a.y(), theta_a);
 
     // Convert b to isometric 2D transform in the world coordinate frame
-    Eigen::Matrix<T, 3, 3> T_w_b = IsometricTransform2D<T>(b[0], b[1], b[2]);
+    Eigen::Matrix<T, 3, 3> T_w_b = IsometricTransform2D<T>(p_b.x(), p_b.y(), theta_b);
 
     // Convert observed position and orientation into isometric 2D transform
-    Eigen::Matrix<T, 3, 3> T_a_b_hat = IsometricTransform2D<T>(T(dx_), T(dy_), T(dtheta_));
+    Eigen::Matrix<T, 3, 3> T_a_b_hat =
+        IsometricTransform2D<T>(T(measured_p_.x()), T(measured_p_.y()), T(measured_theta_));
 
     // T_w_a^{-1} * T_w_b = T_a_w * T_w_b = T_a_b
     Eigen::Matrix<T, 3, 3> diff = T_a_b_hat.inverse() * (T_w_a.inverse() * T_w_b);
 
-    residuals_map(0) = diff(0, 2);
-    residuals_map(1) = diff(1, 2);
-    residuals_map(2) = ceres::asin(NormaliseAngle(diff(1, 0)));
+    Eigen::Map<Eigen::Matrix<T, 3, 1> > residuals(residuals_ptr);
 
-    residuals_map = sqrt_information_.template cast<T>() * residuals_map;
+    residuals(0) = diff(0, 2);
+    residuals(1) = diff(1, 2);
+    residuals(2) = ceres::asin(NormaliseAngle(diff(1, 0)));
+
+    // Scale the residuals by the measurement uncertainty.
+    residuals.applyOnTheLeft(sqrt_information_.template cast<T>());
 
     return true;
   }
 
-  static ceres::CostFunction* Create(const double dx, const double dy, const double dtheta,
+  static ceres::CostFunction* Create(const Eigen::Vector2d p, const double theta,
                                      const Eigen::Matrix3d& sqrt_information) {
-    return (new ceres::AutoDiffCostFunction<RelativeMotionError, 3, 3, 3>(
-        new RelativeMotionError(dx, dy, dtheta, sqrt_information)));
+    return (new ceres::AutoDiffCostFunction<RelativeMotionError, 3, 2, 1, 2, 1>(
+        new RelativeMotionError(p, theta, sqrt_information)));
   };
 
  private:
-  // the observed displacement of frame b w.r.t. frame a in the x direction
-  const double dx_;
-  // the observed displacement of frame b w.r.t. frame a in the y direction
-  const double dy_;
+  // the observed displacement of frame b w.r.t. frame a
+  const Eigen::Vector2d measured_p_;
   // the observed orientation of frame b w.r.t. frame a
-  const double dtheta_;
+  const double measured_theta_;
   // the sqrt of the information matrix (inverse of covariance)
   const Eigen::Matrix3d sqrt_information_;
 };
 
 struct DCSLoopClosureError {
   // Observation for the edge
-  DCSLoopClosureError(double dx, double dy, double dtheta, Eigen::Matrix3d sqrt_information)
-      : dx_(dx), dy_(dy), dtheta_(NormaliseAngle(dtheta)), sqrt_information_(sqrt_information) {}
+  DCSLoopClosureError(const Eigen::Vector2d& p, const double theta, const Eigen::Matrix3d& sqrt_information)
+      : measured_p_(p), measured_theta_(NormaliseAngle(theta)), sqrt_information_(sqrt_information) {}
 
   // calculate the error for each edge. a and b are 3-vectors representing state
   // of the node ie. x,y,theta
   template <typename T>
-  bool operator()(const T* const a, const T* const b, T* e) const {
-    Eigen::Map<Eigen::Matrix<T, 3, 1> > residuals_map(e);
+  bool operator()(const T* const p_a_ptr, const T* const theta_a_ptr, const T* const p_b_ptr,
+                  const T* const theta_b_ptr, T* residuals_ptr) const {
+    Eigen::Map<const Eigen::Matrix<T, 2, 1> > p_a(p_a_ptr);
+    const T theta_a = theta_a_ptr[0];
 
-    // Convert a to isometric 2D transform in the world coordinate frame
-    Eigen::Matrix<T, 3, 3> T_w_a = IsometricTransform2D<T>(a[0], a[1], a[2]);
+    Eigen::Map<const Eigen::Matrix<T, 2, 1> > p_b(p_b_ptr);
+    const T theta_b = theta_b_ptr[0];
+
+    // Convert a to isometric 2D transform of a in the world coordinate frame
+    Eigen::Matrix<T, 3, 3> T_w_a = IsometricTransform2D<T>(p_a.x(), p_a.y(), theta_a);
 
     // Convert b to isometric 2D transform in the world coordinate frame
-    Eigen::Matrix<T, 3, 3> T_w_b = IsometricTransform2D<T>(b[0], b[1], b[2]);
+    Eigen::Matrix<T, 3, 3> T_w_b = IsometricTransform2D<T>(p_b.x(), p_b.y(), theta_b);
 
     // Convert observed position and orientation into isometric 2D transform
-    Eigen::Matrix<T, 3, 3> T_a_b_hat = IsometricTransform2D<T>(T(dx_), T(dy_), T(dtheta_));
+    Eigen::Matrix<T, 3, 3> T_a_b_hat =
+        IsometricTransform2D<T>(T(measured_p_.x()), T(measured_p_.y()), T(measured_theta_));
 
     // T_w_a^{-1} * T_w_b = T_a_w * T_w_b = T_a_b
     Eigen::Matrix<T, 3, 3> diff = T_a_b_hat.inverse() * (T_w_a.inverse() * T_w_b);
+
+    Eigen::Map<Eigen::Matrix<T, 3, 1> > residuals(residuals_ptr);
 
     // see eq. 15 in "Robust Map Optimization using Dynamic Covariance Scaling", Agarwal et al 2013
     // residuals_map(0) = diff(0, 2);
@@ -96,33 +111,32 @@ struct DCSLoopClosureError {
     // T psi = T(0.5);
     // T s = std::min(T(1.0), T(2.0) * psi / (psi + chi_2));
 
-    // residuals_map = s * sqrt_information_.template cast<T>() * residuals_map;
+    // Scale the residuals by the measurement uncertainty.
+    // residuals.applyOnTheLeft(sqrt_information_.template cast<T>());
 
     // TODO: this is mpkuse's implementation. Find out why this works and the above does not.
     T res = diff(0, 2) * diff(0, 2) + diff(1, 2) * diff(1, 2);
     T psi_org = ceres::sqrt(T(2.0) * T(.5) / (T(.5) + res));
     T psi = std::min(T(1.0), psi_org);
 
-    residuals_map(0) = psi * diff(0, 2);
-    residuals_map(1) = psi * diff(1, 2);
-    residuals_map(2) = psi * ceres::asin(NormaliseAngle(diff(1, 0)));
+    residuals(0) = psi * diff(0, 2);
+    residuals(1) = psi * diff(1, 2);
+    residuals(2) = psi * ceres::asin(NormaliseAngle(diff(1, 0)));
 
     return true;
   }
 
-  static ceres::CostFunction* Create(const double dx, const double dy, const double dtheta,
+  static ceres::CostFunction* Create(const Eigen::Vector2d& p, const double theta,
                                      const Eigen::Matrix3d& sqrt_information) {
-    return (new ceres::AutoDiffCostFunction<DCSLoopClosureError, 3, 3, 3>(
-        new DCSLoopClosureError(dx, dy, dtheta, sqrt_information)));
+    return (new ceres::AutoDiffCostFunction<DCSLoopClosureError, 3, 2, 1, 2, 1>(
+        new DCSLoopClosureError(p, theta, sqrt_information)));
   };
 
  private:
-  // the observed displacement of frame b w.r.t. frame a in the x direction
-  const double dx_;
-  // the observed displacement of frame b w.r.t. frame a in the y direction
-  const double dy_;
+  // the observed displacement of frame b w.r.t. frame a
+  const Eigen::Vector2d measured_p_;
   // the observed orientation of frame b w.r.t. frame a
-  const double dtheta_;
+  const double measured_theta_;
   // the sqrt of the information matrix (inverse of covariance)
   const Eigen::Matrix3d sqrt_information_;
 };

@@ -6,7 +6,8 @@
 #include <Eigen/Eigen>
 
 struct RelativeMotionError {
-  RelativeMotionError(Eigen::Vector3d p, Eigen::Quaterniond q, Eigen::Matrix<double, 6, 6> sqrt_information)
+  RelativeMotionError(const Eigen::Vector3d& p, const Eigen::Quaterniond& q,
+                      const Eigen::Matrix<double, 6, 6>& sqrt_information)
       : measured_p_(p), measured_q_(q), sqrt_information_(sqrt_information) {}
 
   template <typename T>

@@ -1,5 +1,5 @@
-#ifndef TOY_POSE_GRAPH_OPTIMIZATION_CERES__POSE_GRAPH_2D_H_
-#define TOY_POSE_GRAPH_OPTIMIZATION_CERES__POSE_GRAPH_2D_H_
+#ifndef _POSE_GRAPH_2D_H_
+#define _POSE_GRAPH_2D_H_
 
 #include <Eigen/Eigen>
 
@@ -18,25 +18,29 @@ enum class VertexType {
 };
  */
 
-class Vertex2D {
- public:
-  Vertex2D(int index, double x, double y, double theta) : index_(index), p_{x, y, theta} {}
+struct Vertex2D {
+  Vertex2D(int index, Eigen::Vector2d p, double theta) : index_(index), p_(p), theta_(theta) {}
 
   int index_;
-  double p_[3];
+  Eigen::Vector2d p_;
+  double theta_;
+
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 };
 
-class Edge2D {
- public:
-  Edge2D(std::shared_ptr<Vertex2D> a, std::shared_ptr<Vertex2D> b, double x, double y, double theta, EdgeType type,
+struct Edge2D {
+  Edge2D(std::shared_ptr<Vertex2D> a, std::shared_ptr<Vertex2D> b, Eigen::Vector2d p, double theta, EdgeType type,
          Eigen::Matrix3d information)
-      : a_(a), b_(b), x_(x), y_(y), theta_(theta), type_(type), information_(information) {}
+      : a_(a), b_(b), p_(p), theta_(theta), type_(type), information_(information) {}
 
   std::shared_ptr<Vertex2D> a_, b_;
-  double x_, y_, theta_;
+  Eigen::Vector2d p_;
+  double theta_;
   // The inverse of the measurement covariance matrix.
   Eigen::Matrix3d information_;
   EdgeType type_;
+
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 };
 
 class PoseGraph2D {
@@ -59,4 +63,4 @@ class PoseGraph2D {
   std::list<Edge2D> edges_;
 };
 
-#endif  // TOY_POSE_GRAPH_OPTIMIZATION_CERES__POSE_GRAPH_2D_H_
+#endif  // _POSE_GRAPH_2D_H_

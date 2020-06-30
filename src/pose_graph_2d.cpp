@@ -13,19 +13,20 @@ void PoseGraph2D::AddEdge(Edge2D edge) { edges_.push_back(edge); }
 
 void PoseGraph2D::Optimise() {
   ceres::Problem problem;
-  ceres::LossFunction* loss_function = new ceres::HuberLoss(1.0);
+  ceres::LossFunction* loss_function = nullptr;
 
   for (auto& edge : edges_) {
     ceres::CostFunction* cost_function = nullptr;
     const Eigen::Matrix3d sqrt_information = edge.information_.llt().matrixL();
     if (edge.type_ == EdgeType::Odometry) {
-      cost_function = RelativeMotionError::Create(edge.x_, edge.y_, edge.theta_, sqrt_information);
+      cost_function = RelativeMotionError::Create(edge.p_, edge.theta_, sqrt_information);
     } else if (edge.type_ == EdgeType::LoopClosure) {
-      cost_function = DCSLoopClosureError::Create(edge.x_, edge.y_, edge.theta_, sqrt_information);
+      cost_function = DCSLoopClosureError::Create(edge.p_, edge.theta_, sqrt_information);
     } else if (edge.type_ == EdgeType::BogusLoopClosure) {
-      cost_function = DCSLoopClosureError::Create(edge.x_, edge.y_, edge.theta_, sqrt_information);
+      cost_function = DCSLoopClosureError::Create(edge.p_, edge.theta_, sqrt_information);
     }
-    problem.AddResidualBlock(cost_function, loss_function, edge.a_->p_, edge.b_->p_);
+    problem.AddResidualBlock(cost_function, loss_function, edge.a_->p_.data(), &edge.a_->theta_, edge.b_->p_.data(),
+                             &edge.b_->theta_);
   }
 
   // The pose graph optimization problem has three DOFs that are not fully
@@ -35,7 +36,8 @@ void PoseGraph2D::Optimise() {
   // internal damping which mitigate this issue, but it is better to properly
   // constrain the gauge freedom. This can be done by setting one of the poses
   // as constant so the optimizer cannot change it.
-  problem.SetParameterBlockConstant(vertices_[0]->p_);
+  problem.SetParameterBlockConstant(vertices_[0]->p_.data());
+  problem.SetParameterBlockConstant(&vertices_[0]->theta_);
 
   ceres::Solver::Options options;
   options.minimizer_progress_to_stdout = true;
@@ -56,26 +58,31 @@ void PoseGraph2D::LoadFromFile(const std::string& filename) {
   while (g2o_file >> type) {
     if (type == "VERTEX_SE2") {
       int index;
-      double x, y, theta;
-      g2o_file >> index >> x >> y >> theta;
-      vertices_.push_back(std::make_shared<Vertex2D>(index, x, y, theta));
+      Eigen::Vector2d p;
+      double theta;
+      g2o_file >> index >> p.x() >> p.y() >> theta;
+      vertices_.push_back(std::make_shared<Vertex2D>(index, p, theta));
     } else if (type == "EDGE_SE2") {
       int a_index, b_index;
-      double x, y, theta;
+      Eigen::Vector2d p;
+      double theta;
       Eigen::Matrix3d information;
-      g2o_file >> a_index >> b_index >> x >> y >> theta >> information(0, 0) >> information(0, 1) >>
-          information(0, 2) >> information(1, 1) >> information(1, 2) >> information(2, 2);
+      g2o_file >> a_index >> b_index >> p.x() >> p.y() >> theta;
 
-      // Set the lower triangular part of the information matrix.
-      information(1, 0) = information(0, 1);
-      information(2, 0) = information(0, 2);
-      information(2, 1) = information(1, 2);
+      for (int i = 0; i < 3 && g2o_file.good(); ++i) {
+        for (int j = i; j < 3 && g2o_file.good(); ++j) {
+          g2o_file >> information(i, j);
+          if (i != j) {
+            information(j, i) = information(i, j);
+          }
+        }
+      }
 
       // odometry nodes by definition follow from each other
       // loop closures are any vertices that do not follow on
       bool indices_follow = (abs(a_index - b_index) == 1);
       EdgeType type = indices_follow ? EdgeType::Odometry : EdgeType::LoopClosure;
-      Edge2D edge(vertices_[a_index], vertices_[b_index], x, y, theta, type, information);
+      Edge2D edge(vertices_[a_index], vertices_[b_index], p, theta, type, information);
       edges_.push_back(edge);
     }
   }
@@ -86,7 +93,7 @@ void PoseGraph2D::WriteVerticesToFile(const std::string& filename) {
   std::ofstream fp;
   fp.open(filename.c_str());
   for (auto& v : vertices_) {
-    fp << v->index_ << " " << v->p_[0] << " " << v->p_[1] << " " << v->p_[2] << std::endl;
+    fp << v->index_ << " " << v->p_[0] << " " << v->p_[1] << " " << v->theta_ << std::endl;
   }
 }
 
@@ -100,18 +107,22 @@ void PoseGraph2D::AddBogusLoopClosures(int n) {
   for (int i = 0; i < n; i++) {
     int a = vertex_distribution(generator);
     int b = vertex_distribution(generator);
-    double x = translation_distribution(generator);
-    double y = translation_distribution(generator);
+    Eigen::Vector2d p;
+    p.x() = translation_distribution(generator);
+    p.y() = translation_distribution(generator);
     double theta = orientation_distribution(generator);
     Eigen::Matrix3d information;
-    information << information_distribution(generator), information_distribution(generator),
-        information_distribution(generator), information_distribution(generator), information_distribution(generator),
-        information_distribution(generator), 0.0, 0.0, 0.0;
-    // Set the lower triangular part of the information matrix.
-    information(1, 0) = information(0, 1);
-    information(2, 0) = information(0, 2);
-    information(2, 1) = information(1, 2);
-    Edge2D edge(vertices_[a], vertices_[b], x, y, theta, EdgeType::BogusLoopClosure, information);
+
+    for (int i = 0; i < 3; ++i) {
+      for (int j = i; j < 3; ++j) {
+        information(i, j) = information_distribution(generator);
+        if (i != j) {
+          information(j, i) = information(i, j);
+        }
+      }
+    }
+
+    Edge2D edge(vertices_[a], vertices_[b], p, theta, EdgeType::BogusLoopClosure, information);
     edges_.push_back(edge);
   }
 }
